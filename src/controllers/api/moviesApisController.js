@@ -100,34 +100,82 @@ const moviesController = {
 
        
     },
-    'new': (req, res) => {
-        db.Movie.findAll({
-            order : [
-                ['release_date', 'DESC']
-            ],
-            limit: 5
-        })
-            .then(movies => {
-                res.render('newestMovies', {movies});
-            });
+    'new': async (req, res) => {
+
+        try {
+            let movies = await  db.Movie.findAll({
+                order : [
+                    ['release_date', 'DESC']
+                ],
+                limit: +req.query.limit || 5 ,
+            })
+            response = {
+                ok : true,
+                meta : {
+                    status : 200,
+                    total : movies.length
+                },
+                data : movies
+            }
+            return res.status(200).json(response)
+            
+        } catch (error) {
+
+            console.log(error)
+            let response = {
+
+                ok : false,
+                meta : {
+                    status : 500
+                },
+                msg : error.message ? error.message : "comuniquese con el administrador de este sitio"
+            }
+            return res.status(error.statusCode || 500).json(response)
+        }
+       
+            
     },
-    'recomended': (req, res) => {
-        db.Movie.findAll({
-            include: ['genre'],
-            where: {
-                rating: {[db.Sequelize.Op.gte] : 8}
-            },
-            order: [
-                ['rating', 'DESC']
-            ]
-        })
-            .then(movies => {
-                res.render('recommendedMovies.ejs', {movies});
-            });
+    recomended: async (req, res) => {
+
+        try {
+            let movies = await db.Movie.findAll({
+                include: ['genre'],
+                where: {
+                    rating: {[db.Sequelize.Op.gte] : +req.query.rating || 8},
+                },
+                order: [
+                    ['rating', 'DESC'],
+                ]
+            })
+
+            response = {
+                ok : true,
+                meta : {
+                    status : 200,
+                    total : movies.length
+                },
+                data : movies
+            }
+            return res.status(200).json(response)
+          
+
+        } catch (error) {
+            console.log(error)
+            let response = {
+
+                ok : false,
+                meta : {
+                    status : 500
+                },
+                msg : error.message ? error.message : "comuniquese con el administrador de este sitio"
+            }
+            return res.status(error.statusCode || 500).json(response)
+            
+        }
+       
     },
     create: function (req,res) {
-        Movies
-        .create(
+        Movies.create(
             {
                 title: req.body.title,
                 rating: req.body.rating,
