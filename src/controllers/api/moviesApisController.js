@@ -53,20 +53,52 @@ const moviesController = {
         }
         
     },
-    'detail':  (req, res) => {
+    'detail': async (req, res) => {
 
         if(checkID(req.params.id)){
             return res.status(400).json(checkID(req.params.id))
         }
+        try {
+            let movie = await db.Movie.findByPk(req.params.id,{ // obtengo la pelicula con dicho ID
+                include : ['genre'] // incluyo el genero asociado
+            });
+           
+            if(!movie){ // si no existe el pelicula
+
+                response = {
+                    ok: false,
+                    meta : {
+                        status : 404 // mando 404 
+                    },
+                    msg: "No se encuentra la pelicula con ese ID, intente nuevamente"
+                    
+                 }
+                 return res.status(404).json(response)
+            }
+            response = {
+                ok : true,
+                meta : {
+                    status : 200
+                },
+                data : movie
+            }
+            return res.status(200).json(response)
+          
+        } catch (error) {
+           
+            console.log(error)
+            let response = {
+
+                ok : false,
+                meta : {
+                    status : 500
+                },
+                msg : error.message ? error.message : "comuniquese con el administrador de este sitio"
+            }
+            return res.status(error.statusCode || 500).json(response)
+        }
 
        
-        db.Movie.findByPk(req.params.id,
-            {
-                include : ['genre']
-            })
-            .then(movie => {
-                res.render('moviesDetail.ejs', {movie});
-            });
     },
     'new': (req, res) => {
         db.Movie.findAll({
